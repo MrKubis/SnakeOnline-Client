@@ -2,10 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -53,11 +51,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
+
 		case "ctrl+c":
-			fmt.Println("JAJAJAAAa")
-			time.Sleep(2 * time.Second)
 			return m, tea.Quit
-		case "enter":
+		case "up":
+			if m.state == statePlaying {
+				m.client.Move("Up")
+			}
+		case "down":
+			if m.state == statePlaying {
+				m.client.Move("Down")
+			}
+		case "left":
+			if m.state == statePlaying {
+				m.client.Move("Left")
+			}
+		case "right":
+			if m.state == statePlaying {
+				m.client.Move("Right")
+			}
 		}
 	case WebSocketMsg:
 
@@ -196,5 +208,4 @@ func main() {
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
-
 }

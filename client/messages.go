@@ -1,10 +1,13 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type ClientMessage struct {
-	clientMessageType int
-	Content           string
+	Type    string
+	Content string
 }
 
 type ServerMessage struct {
@@ -14,8 +17,25 @@ type ServerMessage struct {
 
 func (c *Client) Join(nickname string) error {
 	message := ClientMessage{
-		clientMessageType: 0,
-		Content:           nickname}
+		Type:    "JOIN",
+		Content: nickname}
+
+	jsonMsg, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	c.Send(jsonMsg)
+	return nil
+}
+
+func (c *Client) Move(direction string) error {
+
+	fmt.Println(direction)
+	message := ClientMessage{
+		Type:    "MOVE",
+		Content: direction,
+	}
 
 	jsonMsg, err := json.Marshal(message)
 	if err != nil {
