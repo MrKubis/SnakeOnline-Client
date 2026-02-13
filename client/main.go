@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -52,6 +54,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
+			fmt.Println("JAJAJAAAa")
+			time.Sleep(2 * time.Second)
 			return m, tea.Quit
 		case "enter":
 		}
@@ -63,7 +67,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			return m, cmd
 		}
-		log.Printf("Received WS message: %v", serverMsg)
 
 		switch serverMsg.Type {
 		case 5:
@@ -79,7 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func parseBoardData(message string) []byte {
-	result := strings.Trim(message, "\n")
+	result := strings.ReplaceAll(message, "\n", "")
 	return []byte(result)
 }
 
@@ -99,7 +102,6 @@ func (m *model) UpdateBoard(data []byte) {
 			case "F":
 				m.board[i][j] = 2
 			}
-
 			index++
 		}
 	}
@@ -145,19 +147,22 @@ func NewModel(client *Client) *model {
 }
 
 func (m *model) renderBoard() string {
+
 	var result string = ""
 	for i := range board_height {
 		for j := range board_width {
 			switch m.board[i][j] {
 			case 0:
-				result += " "
+				result += "[ ]"
 			case 1:
-				result += "█"
+				result += "[X]"
 			case 2:
-				result += "@"
+				result += "[@]"
 			}
 		}
+		result += "\n"
 	}
+
 	return result
 }
 
