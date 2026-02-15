@@ -37,6 +37,15 @@ type Styles struct {
 	LoginStyle  lipgloss.Style
 }
 
+var (
+	logo = `
+ ▗▄▄▖▄▄▄▄  ▗▞▀▜▌█  ▄ ▗▞▀▚▖     ▗▄▖ ▗▖  ▗▖█ ▄ ▄▄▄▄  ▗▞▀▚▖
+▐▌   █   █ ▝▚▄▟▌█▄▀  ▐▛▀▀▘    ▐▌ ▐▌▐▛▚▖▐▌█ ▄ █   █ ▐▛▀▀▘
+ ▝▀▚▖█   █      █ ▀▄ ▝▚▄▄▖    ▐▌ ▐▌▐▌ ▝▜▌█ █ █   █ ▝▚▄▄▖
+▗▄▄▞▘           █  █          ▝▚▄▞▘▐▌  ▐▌█ █            
+`
+)
+
 const (
 	stateConnecting gameState = iota
 	statePlaying
@@ -123,7 +132,15 @@ func (m *model) renderBoard() string {
 }
 
 func (m *model) renderLogging() string {
-	return m.styles.LoginStyle.Render(m.textInput.View())
+
+	style := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(m.styles.BorderColor).
+		Padding(1, 2)
+
+	logoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#76bdff"))
+	input := style.Render(lipgloss.JoinVertical(lipgloss.Center, "Enter your nickname\n", m.styles.LoginStyle.Render(m.textInput.View())))
+	return lipgloss.JoinVertical(lipgloss.Center, logoStyle.Render(logo), "\n\n", input)
 }
 
 func (m *model) renderLoading() string {
@@ -157,6 +174,14 @@ func (m *model) UpdateBoard(data []byte) {
 		}
 	}
 }
+func (m *model) resetBoard() {
+	for i := range board_height {
+		for j := range board_width {
+			m.board[i][j] = 0
+		}
+	}
+}
+
 func (m *model) resetSpinner() {
 	m.spinner = spinner.New()
 	m.spinner.Spinner = CustomSpinner
@@ -172,10 +197,9 @@ func initialModel(c *Client) model {
 	}
 
 	ti := textinput.New()
-	ti.Placeholder = "Enter your nickname"
 	ti.Focus()
 	ti.CharLimit = 156
-	ti.Width = 20
+	ti.Width = 30
 
 	sp := spinner.New()
 	sp.Spinner = CustomSpinner
@@ -213,11 +237,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.state == stateLogging {
 			switch {
 
+			case msg.String() == "ctrl+c":
+				return m, tea.Quit
+
 			case key.Matches(msg, m.keys.Help):
 				m.help.ShowAll = !m.help.ShowAll
-
-			case key.Matches(msg, m.keys.Quit):
-				return m, tea.Quit
 
 			case key.Matches(msg, m.keys.Enter):
 				if m.textInput.Value() != "" {
@@ -260,6 +284,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case key.Matches(msg, m.keys.Right):
 				m.client.Move("Right")
+			case key.Matches(msg, m.keys.Enter):
+				if m.isGameOver {
+					m.state = stateLogging
+					m.isGameOver = false
+					m.resetBoard()
+					return m, tea.Batch(textinput.Blink, m.spinner.Tick)
+				}
 
 			}
 		}
