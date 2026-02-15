@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type ClientMessage struct {
@@ -30,8 +29,6 @@ func (c *Client) Join(nickname string) error {
 }
 
 func (c *Client) Move(direction string) error {
-
-	fmt.Println(direction)
 	message := ClientMessage{
 		Type:    "MOVE",
 		Content: direction,
