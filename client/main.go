@@ -9,9 +9,6 @@ import (
 type gameState int
 
 const (
-	stateConnecting gameState = iota
-	statePlaying
-	stateLogging
 	board_width  = 20
 	board_height = 20
 )

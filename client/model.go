@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,6 +17,7 @@ import (
 type model struct {
 	state        gameState
 	isGameLoaded bool
+	isGameOver   bool
 	board        [board_height][board_width]int
 	textInput    textinput.Model
 	spinner      spinner.Model
@@ -23,6 +26,8 @@ type model struct {
 	height       int
 	styles       *Styles
 	client       *Client
+	keys         keyMap
+	help         help.Model
 }
 
 type Styles struct {
@@ -31,6 +36,12 @@ type Styles struct {
 	FruitStyle  lipgloss.Style
 	LoginStyle  lipgloss.Style
 }
+
+const (
+	stateConnecting gameState = iota
+	statePlaying
+	stateLogging
+)
 
 var (
 	CustomSpinner = spinner.Spinner{
@@ -102,7 +113,13 @@ func (m *model) renderBoard() string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(m.styles.BorderColor)
 
-	return lipgloss.JoinVertical(lipgloss.Center, style.Render(result))
+	helpview := m.help.View(m.keys)
+
+	if !m.isGameOver {
+		return lipgloss.JoinVertical(lipgloss.Center, style.Render(result), helpview)
+	} else {
+		return lipgloss.JoinVertical(lipgloss.Center, style.Render(result))
+	}
 }
 
 func (m *model) renderLogging() string {
@@ -170,6 +187,9 @@ func initialModel(c *Client) model {
 		board:     board,
 		textInput: ti,
 		spinner:   sp,
+
+		keys: keys,
+		help: help.New(),
 	}
 }
 
@@ -179,21 +199,27 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case spinner.TickMsg:
 
+	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
 	case tea.KeyMsg:
 		if m.state == stateLogging {
-			switch msg.String() {
-			case "ctrl+c":
+			switch {
+
+			case key.Matches(msg, m.keys.Help):
+				m.help.ShowAll = !m.help.ShowAll
+
+			case key.Matches(msg, m.keys.Quit):
 				return m, tea.Quit
 
-			case "enter":
+			case key.Matches(msg, m.keys.Enter):
 				if m.textInput.Value() != "" {
 					m.nickname = m.textInput.Value()
 					err := m.client.Join(m.nickname)
@@ -215,19 +241,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if m.state == statePlaying {
 
-			switch msg.String() {
-			case "ctrl+c":
+			switch {
+
+			case key.Matches(msg, m.keys.Help):
+				m.help.ShowAll = !m.help.ShowAll
+
+			case key.Matches(msg, m.keys.Quit):
 				return m, tea.Quit
-			case "up":
+
+			case key.Matches(msg, m.keys.Up):
 				m.client.Move("Up")
 
-			case "down":
+			case key.Matches(msg, m.keys.Down):
 				m.client.Move("Down")
 
-			case "left":
+			case key.Matches(msg, m.keys.Left):
 				m.client.Move("Left")
 
-			case "right":
+			case key.Matches(msg, m.keys.Right):
 				m.client.Move("Right")
 
 			}
@@ -240,14 +271,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if err != nil {
 			return m, cmd
 		}
-
 		switch serverMsg.Type {
+		case 4:
+			m.isGameOver = true
+
 		case 5:
 			boardData := parseBoardData(serverMsg.Content)
 			m.UpdateBoard(boardData)
 			m.isGameLoaded = true
 			m.state = statePlaying
 		}
+
 		return m, listenForWSMessages(m.client.recieve)
 	}
 
@@ -258,6 +292,7 @@ func (m model) View() string {
 
 	result := ""
 	switch m.state {
+
 	case stateLogging:
 		result += m.renderLogging()
 	case stateConnecting:
@@ -268,5 +303,21 @@ func (m model) View() string {
 		}
 		result += m.renderBoard()
 	}
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, result)
+
+	overlay := ""
+
+	if m.isGameOver {
+
+		overlay = "Game over!\n\nPress <ENTER> to quit"
+		overlay = lipgloss.Place(
+			m.width,
+			4,
+			lipgloss.Center,
+			lipgloss.Top,
+			overlay,
+		)
+	}
+	centered := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, lipgloss.JoinVertical(lipgloss.Center, result, overlay))
+
+	return centered
 }
