@@ -287,6 +287,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, m.keys.Enter):
 				if m.isGameOver {
 					m.state = stateLogging
+					m.isGameLoaded = false
 					m.isGameOver = false
 					m.resetBoard()
 					return m, tea.Batch(textinput.Blink, m.spinner.Tick)
@@ -329,8 +330,10 @@ func (m model) View() string {
 	case stateConnecting:
 		result += m.renderLoading()
 	case statePlaying:
-		if m.width == 0 || !m.isGameLoaded {
+		if !m.isGameLoaded {
 			result += m.renderLoading() + "\n"
+		} else {
+			result += "\n"
 		}
 		result += m.renderBoard()
 	}
@@ -339,10 +342,10 @@ func (m model) View() string {
 
 	if m.isGameOver {
 
-		overlay = "Game over!\n\nPress <ENTER> to quit"
+		overlay = "Game over!\nPress <ENTER> to quit"
 		overlay = lipgloss.Place(
 			m.width,
-			4,
+			2,
 			lipgloss.Center,
 			lipgloss.Top,
 			overlay,
