@@ -1,8 +1,11 @@
 package main
 
 import (
+	"app/internal/tui"
 	"log"
 
+	"github.com/MrKubis/SnakeOnline-Client/internal/client"
+	"github.com/MrKubis/SnakeOnline-Client/internal/tui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -22,7 +25,7 @@ var serverUrl string = "ws://localhost:5250/ws"
 
 func main() {
 
-	client, err := NewClient(serverUrl)
+	client, err := client.NewClient(serverUrl)
 	if err != nil {
 		log.Fatal("Error connection: ", err)
 	}
@@ -31,7 +34,7 @@ func main() {
 
 	client.Start()
 
-	p := tea.NewProgram(initialModel(client), tea.WithAltScreen())
+	p := tea.NewProgram(tui.InitialModel(client), tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)

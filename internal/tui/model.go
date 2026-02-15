@@ -1,4 +1,4 @@
-package main
+package tui
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MrKubis/SnakeOnline-Client/internal/client"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -15,17 +16,17 @@ import (
 )
 
 type model struct {
-	state        gameState
+	state        client.gameState
 	isGameLoaded bool
 	isGameOver   bool
-	board        [board_height][board_width]int
+	board        [client.board_height][client.board_width]int
 	textInput    textinput.Model
 	spinner      spinner.Model
 	nickname     string
 	width        int
 	height       int
 	styles       *Styles
-	client       *Client
+	client       *client.Client
 	keys         keyMap
 	help         help.Model
 }
@@ -47,7 +48,7 @@ var (
 )
 
 const (
-	stateConnecting gameState = iota
+	stateConnecting client.gameState = iota
 	statePlaying
 	stateLogging
 )
@@ -69,12 +70,12 @@ func DefaultStyles() *Styles {
 	return s
 }
 
-func NewModel(client *Client) *model {
+func NewModel(client *client.Client) *model {
 	styles := DefaultStyles()
 
-	board := [board_height][board_width]int{}
-	for i := range board_height {
-		for j := range board_width {
+	board := [client.board_height][client.board_width]int{}
+	for i := range client.board_height {
+		for j := range client.board_width {
 			board[i][j] = 0
 		}
 	}
@@ -101,8 +102,8 @@ func parseBoardData(message string) []byte {
 func (m *model) renderBoard() string {
 
 	var result string = ""
-	for i := range board_height {
-		for j := range board_width {
+	for i := range client.board_height {
+		for j := range client.board_width {
 			switch m.board[i][j] {
 			case 0:
 				result += "  "
@@ -113,7 +114,7 @@ func (m *model) renderBoard() string {
 
 			}
 		}
-		if i < board_height-1 {
+		if i < client.board_height-1 {
 			result += "\n"
 		}
 	}
@@ -148,7 +149,7 @@ func (m *model) renderLoading() string {
 }
 
 type BoardUpdateMsg struct {
-	board [board_height][board_width]int
+	board [client.board_height][client.board_width]int
 }
 type WebSocketMsg struct {
 	data []byte
@@ -157,8 +158,8 @@ type WebSocketMsg struct {
 func (m *model) UpdateBoard(data []byte) {
 
 	index := 0
-	for i := range board_height {
-		for j := range board_width {
+	for i := range client.board_height {
+		for j := range client.board_width {
 			if index >= len(data) {
 				return
 			}
@@ -175,8 +176,8 @@ func (m *model) UpdateBoard(data []byte) {
 	}
 }
 func (m *model) resetBoard() {
-	for i := range board_height {
-		for j := range board_width {
+	for i := range client.board_height {
+		for j := range client.board_width {
 			m.board[i][j] = 0
 		}
 	}
@@ -187,11 +188,11 @@ func (m *model) resetSpinner() {
 	m.spinner.Spinner = CustomSpinner
 }
 
-func initialModel(c *Client) model {
+func InitialModel(c *client.Client) model {
 	styles := DefaultStyles()
-	board := [board_height][board_width]int{}
-	for i := range board_height {
-		for j := range board_width {
+	board := [client.board_height][client.board_width]int{}
+	for i := range client.board_height {
+		for j := range client.board_width {
 			board[i][j] = 0
 		}
 	}
@@ -297,7 +298,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case WebSocketMsg:
 
-		serverMsg := &ServerMessage{}
+		serverMsg := &client.ServerMessage{}
 		err := json.Unmarshal(msg.data, serverMsg)
 
 		if err != nil {
