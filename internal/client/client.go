@@ -27,7 +27,7 @@ var upgrader = websocket.Upgrader{
 type Client struct {
 	conn    *websocket.Conn
 	send    chan []byte
-	recieve chan []byte
+	Recieve chan []byte
 }
 
 // writePump pumps recieved messages from server
@@ -79,7 +79,7 @@ func (c *Client) readPump() {
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		select {
-		case c.recieve <- message:
+		case c.Recieve <- message:
 		default:
 			log.Println("Channel full, dropping message")
 		}
@@ -100,7 +100,7 @@ func NewClient(serverURL string) (*Client, error) {
 	client := &Client{
 		conn:    conn,
 		send:    make(chan []byte, 256),
-		recieve: make(chan []byte, 256),
+		Recieve: make(chan []byte, 256),
 	}
 	return client, nil
 }

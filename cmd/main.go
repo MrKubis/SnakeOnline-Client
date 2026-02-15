@@ -1,19 +1,12 @@
 package main
 
 import (
-	"app/internal/tui"
 	"log"
 
-	"github.com/MrKubis/SnakeOnline-Client/internal/client"
-	"github.com/MrKubis/SnakeOnline-Client/internal/tui"
+	"app/internal/client"
+	"app/internal/tui"
+
 	tea "github.com/charmbracelet/bubbletea"
-)
-
-type gameState int
-
-const (
-	board_width  = 20
-	board_height = 20
 )
 
 var serverUrl string = "ws://localhost:5250/ws"
