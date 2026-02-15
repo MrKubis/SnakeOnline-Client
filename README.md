@@ -1,6 +1,8 @@
 # Snake Online - web client app
-<img width="928" height="316" alt="image" src="https://github.com/user-attachments/assets/dbcecd7e-1b89-47e1-b163-5e91eea02f79" />
 
+<p align="center">
+  <img width="928" height="316" alt="image" src="https://github.com/user-attachments/assets/dbcecd7e-1b89-47e1-b163-5e91eea02f79" />
+</p>
 Sup!!!
 This project's purpose is to handle web client for my Online Snake Game, it's quite basic, just tui with web socket client but it was my first GO project. Quite fun!
 
